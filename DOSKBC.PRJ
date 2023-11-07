@@ -1,0 +1,2 @@
+doskbc (doskbc.c vga.h types.h)
+vga (vga.c vga.h types.h)
