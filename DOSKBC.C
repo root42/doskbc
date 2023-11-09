@@ -7,9 +7,7 @@
 #define IRQ_PORT    0x20
 #define KBC_IRQ     0x09
 #define KBC_PORT    0x60
-#define KBC_SCP     0x61
 #define KBC_BREAK   0x80
-#define SCP_KBC_DIS 0x80
 
 #define KEY_ESC     0x01
 #define KEY_W       0x11
@@ -22,11 +20,12 @@
 volatile byte keys[256];
 
 void interrupt ( *old_irq )();
+byte far *kb_buf_head = MK_FP( 0x0041, 0x001A );
+byte far *kb_buf_tail = MK_FP( 0x0041, 0x001C );
 
 void interrupt kbc_irq_handler()
 {
-    byte code, state, val = 1;
-    disable();
+    byte code, val = 1;
     code = inportb( KBC_PORT );
     if( code & KBC_BREAK ) {
 	val = 0;
@@ -35,11 +34,8 @@ void interrupt kbc_irq_handler()
 	val = 1;
     }
     keys[code] = val;
-    state = inportb( KBC_SCP );
-    outportb( KBC_SCP, state | SCP_KBC_DIS );
-    outportb( KBC_SCP, state );
-    outportb( IRQ_PORT, 0x20 );
-    enable();
+    old_irq();
+    *kb_buf_tail = *kb_buf_head;
 }
 
 int main()
